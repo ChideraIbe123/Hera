@@ -3,25 +3,27 @@ import { createClient } from '@supabase/supabase-js';
 
 export async function getArticles() {
   const { data, error } = await supabase
-    .from('articles')
-    .select('id, title, link, snippet, ');
+    .from('Articles')
+    .select('id, title, link, snippet, time_scraped, source, created_at, image_url, query_term');
 
   if (error) throw error;
 
-  return data?.map(article => ({
+  // Shuffle the articles using Fisher-Yates algorithm
+  const shuffledData = data ? [...data].sort(() => Math.random() - 0.5) : [];
+
+  return shuffledData.map(article => ({
     id: article.id,
     title: article.title, 
     image: article.image_url,
-    category: article.category
+    link: article.link,
+    // category: article.category
   })) || [];
 }
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  import.meta.env.VITE_SUPABASE_URL!,
+  import.meta.env.VITE_SUPABASE_ANON_KEY!
 );
-
-
 
 export const tailoredNews = [
   {

@@ -1,14 +1,19 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { TrendingUp } from 'lucide-react';
 import { Header } from '../components/Header';
 import { ChatBox } from '../components/ChatBox';
 import { NewsSection } from '../components/NewsSection';
 import { TopicsSection } from '../components/TopicsSection';
 import { Footer } from '../components/Footer';
-import { tailoredNews, popularNews, topics } from '../data';
+import { getArticles, popularNews, topics } from '../data';
 
 export default function Dashboard() {
   const [chatOpen, setChatOpen] = useState(false);
+  const [tailoredArticles, setTailoredArticles] = useState<Array<{ id: any; title: any; image: any; link: any }>>([]);
+
+  useEffect(() => {
+    getArticles().then(articles => setTailoredArticles(articles));
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black text-gray-200">
@@ -25,7 +30,7 @@ export default function Dashboard() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8 sm:space-y-12">
         <NewsSection
           title="Tailored For You"
-          items={tailoredNews}
+          items={tailoredArticles}
           type="tailored"
         />
 

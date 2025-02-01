@@ -8,6 +8,7 @@ interface NewsItem {
   image: string;
   category?: string;
   views?: string;
+  link?: string;
 }
 
 interface NewsSectionProps {
@@ -40,7 +41,10 @@ export function NewsSection({ title, icon, items, type }: NewsSectionProps) {
         <div className="relative">
           <div className="flex space-x-4 sm:space-x-6 overflow-x-auto pb-4 scrollbar-hide">
             {[...items, ...items].map((item, index) => (
-              <div 
+              <a 
+                href={item.link}
+                target="_blank"
+                rel="noopener noreferrer"
                 key={`${item.id}-${index}`} 
                 className="relative overflow-hidden rounded-xl group flex-shrink-0 w-[280px] sm:w-[320px] shadow-xl transform transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl"
               >
@@ -65,7 +69,7 @@ export function NewsSection({ title, icon, items, type }: NewsSectionProps) {
                     </div>
                   </div>
                 </div>
-              </div>
+              </a>
             ))}
           </div>
         </div>
