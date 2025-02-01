@@ -1,4 +1,27 @@
 import { Globe, Briefcase, Microscope, Camera, Code, Heart } from 'lucide-react';
+import { createClient } from '@supabase/supabase-js';
+
+export async function getArticles() {
+  const { data, error } = await supabase
+    .from('articles')
+    .select('id, title, link, snippet, ');
+
+  if (error) throw error;
+
+  return data?.map(article => ({
+    id: article.id,
+    title: article.title, 
+    image: article.image_url,
+    category: article.category
+  })) || [];
+}
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+
 
 export const tailoredNews = [
   {
