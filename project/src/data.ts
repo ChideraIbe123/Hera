@@ -212,9 +212,3 @@ export const topics = [
     ]
   }
 ];
-
-export const mockMessages = [
-  { id: 1, text: "Welcome to NewsHub! How can I help you today?", isBot: true },
-  { id: 2, text: "I'd like to read about technology news", isBot: false },
-  { id: 3, text: "I've found several technology articles for you. The top story is about AI breakthroughs in medical research. Would you like to read that?", isBot: true }
-];

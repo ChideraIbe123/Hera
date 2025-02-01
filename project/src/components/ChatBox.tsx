@@ -1,100 +1,177 @@
-import React, { useEffect, useRef } from 'react';
-import { MessageSquare, Send, X } from 'lucide-react';
-
-interface Message {
-  id: number;
-  text: string;
-  isBot: boolean;
-}
+import React, { useState, useEffect, useRef } from 'react';
+import { MessageSquare, Send, X, Loader2 } from 'lucide-react';
+import { ChatHistory } from './ChatHistory';
+import { ChatInput } from './ChatInput';
+import { ChatMessages } from './ChatMessages';
+import { useAuth } from './AuthProvider';
+import { 
+  Message, 
+  ConversationMeta, 
+  getConversations, 
+  getConversation, 
+  createConversation,
+  updateConversation,
+  deleteConversation
+} from '../lib/chatService';
 
 interface ChatBoxProps {
   isOpen: boolean;
   onClose: () => void;
-  messages: Message[];
-  input: string;
-  onInputChange: (value: string) => void;
-  onSend: () => void;
 }
 
-export function ChatBox({ isOpen, onClose, messages, input, onInputChange, onSend }: ChatBoxProps) {
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+export function ChatBox({ isOpen, onClose }: ChatBoxProps) {
+  const { user } = useAuth();
+  const [conversations, setConversations] = useState<ConversationMeta[]>([]);
+  const [currentConversationId, setCurrentConversationId] = useState<number>();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (user && isOpen) {
+      loadConversations();
+    }
+  }, [user, isOpen]);
+
+  const loadConversations = async () => {
+    if (!user) return;
+    try {
+      const convs = await getConversations(user.id);
+      setConversations(convs);
+    } catch (error) {
+      console.error('Failed to load conversations:', error);
+    }
+  };
+
+  const handleSelectConversation = async (id: number) => {
+    try {
+      const conv = await getConversation(id);
+      if (conv) {
+        setCurrentConversationId(conv.id);
+        setMessages(conv.messages);
+      }
+    } catch (error) {
+      console.error('Failed to load conversation:', error);
+    }
+  };
+
+  const handleNewChat = () => {
+    setCurrentConversationId(undefined);
+    setMessages([]);
+  };
+
+  const handleDeleteConversation = async (id: number) => {
+    if (!window.confirm('Are you sure you want to delete this conversation?')) return;
+    
+    try {
+      await deleteConversation(id);
+      setConversations(prev => prev.filter(c => c.id !== id));
+      if (currentConversationId === id) {
+        setCurrentConversationId(undefined);
+        setMessages([]);
+      }
+    } catch (error) {
+      console.error('Failed to delete conversation:', error);
+    }
+  };
+
+  const handleSend = async (text: string) => {
+    if (!user || loading) return;
+
+    const newMessage: Message = {
+      id: Date.now(),
+      text,
+      isBot: false,
+      timestamp: new Date().toISOString()
+    };
+
+    setLoading(true);
+    try {
+      let conversationId = currentConversationId;
+      
+      if (!conversationId) {
+        conversationId = await createConversation(user.id, text.substring(0, 50) + '...');
+        setCurrentConversationId(conversationId);
+        setConversations(prev => [{
+          id: conversationId,
+          title: text.substring(0, 50) + '...'
+        }, ...prev]);
+      }
+
+      const updatedMessages = [...messages, newMessage];
+      setMessages(updatedMessages);
+
+      // Simulate bot response
+      setTimeout(() => {
+        const botMessage: Message = {
+          id: Date.now(),
+          text: "I'm processing your request. How can I help you further?",
+          isBot: true,
+          timestamp: new Date().toISOString()
+        };
+        
+        const finalMessages = [...updatedMessages, botMessage];
+        setMessages(finalMessages);
+        updateConversation(conversationId!, finalMessages);
+        setLoading(false);
+      }, 1000);
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      setLoading(false);
+    }
+  };
 
   if (!isOpen) return null;
 
   return (
-    <div 
-      className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center backdrop-blur-sm transition-all duration-300"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-    >
-      <div 
-        className={`w-full max-w-4xl h-[85vh] bg-gradient-to-b from-gray-900 to-gray-800 rounded-2xl shadow-2xl flex flex-col mx-4 transform transition-all duration-300 ease-out ${
-          isOpen ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-4'
-        }`}
-      >
-        <div className="h-16 px-6 border-b border-gray-800/50 flex items-center justify-between bg-gray-900/50">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center">
-              <MessageSquare className="w-5 h-5 text-blue-400" />
-            </div>
-            <div>
-              <h2 className="font-medium text-gray-200">Chat Assistant</h2>
-              <p className="text-xs text-gray-400">Always here to help</p>
-            </div>
-          </div>
-          <button 
-            onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center hover:bg-gray-800 rounded-full transition-colors duration-200"
-          >
-            <X className="w-5 h-5 text-gray-400" />
-          </button>
-        </div>
+    <div className="fixed inset-0 bg-black/80 z-50 flex items-start justify-center backdrop-blur-sm">
+      <div className="w-full h-screen max-w-6xl flex">
+        <ChatHistory
+          conversations={conversations}
+          onSelect={handleSelectConversation}
+          onDelete={handleDeleteConversation}
+          currentConversationId={currentConversationId}
+          onNewChat={handleNewChat}
+        />
         
-        <div className="flex-1 overflow-y-auto px-6 py-8 space-y-6">
-          {messages.map((message, index) => (
-            <div 
-              key={message.id} 
-              className={`flex ${message.isBot ? 'justify-start' : 'justify-end'} fade-in`}
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              <div 
-                className={`max-w-[70%] px-5 py-3 rounded-2xl shadow-lg ${
-                  message.isBot 
-                    ? 'bg-gray-800/80 text-gray-200' 
-                    : 'bg-blue-500 text-white'
-                }`}
-              >
-                <p className="text-sm leading-relaxed">{message.text}</p>
+        <div className="flex-1 flex flex-col bg-gradient-to-b from-gray-900 to-gray-800">
+          {/* Header */}
+          <div className="p-4 border-b border-gray-800/50 flex items-center justify-between bg-gray-900/95 backdrop-blur-sm">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center">
+                <MessageSquare className="w-5 h-5 text-blue-400" />
+              </div>
+              <div>
+                <h2 className="font-medium text-gray-200">AI Assistant</h2>
+                <p className="text-xs text-gray-400">Always here to help</p>
               </div>
             </div>
-          ))}
-          <div ref={messagesEndRef} />
-        </div>
-
-        <div className="p-6 border-t border-gray-800/50 bg-gray-900/30">
-          <div className="flex gap-4">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => onInputChange(e.target.value)}
-              placeholder="Type a message..."
-              className="flex-1 h-12 bg-gray-800/50 rounded-xl px-5 text-sm text-gray-200 placeholder-gray-500 border border-gray-700/30 focus:outline-none focus:border-blue-500/30 focus:ring-1 focus:ring-blue-500/20 transition-all duration-200"
-              onKeyPress={(e) => e.key === 'Enter' && onSend()}
-            />
             <button 
-              onClick={onSend}
-              className="w-12 h-12 flex items-center justify-center bg-blue-500 hover:bg-blue-600 rounded-xl transition-all duration-200 hover:shadow-lg hover:shadow-blue-500/20 active:scale-95"
+              onClick={onClose}
+              className="p-2 hover:bg-gray-800/50 rounded-full transition-colors"
             >
-              <Send className="w-5 h-5" />
+              <X className="w-5 h-5 text-gray-400" />
             </button>
           </div>
+
+          {/* Messages */}
+          <ChatMessages messages={messages} />
+
+          {/* Input */}
+          <ChatInput 
+            onSend={handleSend} 
+            disabled={loading}
+            placeholder={loading ? "AI is thinking..." : "Type your message..."}
+          />
+
+          {/* Loading Indicator */}
+          {loading && (
+            <div className="absolute bottom-24 left-1/2 transform -translate-x-1/2">
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>AI is thinking...</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
