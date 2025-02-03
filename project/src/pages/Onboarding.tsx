@@ -1,33 +1,49 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Settings, X, Plus } from 'lucide-react';
-import { supabase } from '../lib/supabase';
-import { useAuth } from '../components/AuthProvider';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Settings, X, Plus } from "lucide-react";
+import { supabase } from "../lib/supabase";
+import { useAuth } from "../components/AuthProvider";
 
 const suggestedKeywords = [
-  'Technology', 'Science', 'Health', 'Business', 'Politics',
-  'Environment', 'Sports', 'Entertainment', 'Education', 'Art',
-  'Innovation', 'Space', 'AI', 'Climate', 'Economy',
-  'Medicine', 'Culture', 'Travel', 'Food', 'Fashion'
+  "Technology",
+  "Science",
+  "Health",
+  "Business",
+  "Politics",
+  "Environment",
+  "Sports",
+  "Entertainment",
+  "Education",
+  "Art",
+  "Innovation",
+  "Space",
+  "AI",
+  "Climate",
+  "Economy",
+  "Medicine",
+  "Culture",
+  "Travel",
+  "Food",
+  "Fashion",
 ];
 
 export default function Onboarding() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
-  const [customKeyword, setCustomKeyword] = useState('');
+  const [customKeyword, setCustomKeyword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleKeywordClick = (keyword: string) => {
     if (selectedKeywords.length >= 10 && !selectedKeywords.includes(keyword)) {
-      setError('You can only select up to 10 keywords');
+      setError("You can only select up to 10 keywords");
       return;
     }
-    
-    setSelectedKeywords(prev => 
+
+    setSelectedKeywords((prev) =>
       prev.includes(keyword)
-        ? prev.filter(k => k !== keyword)
+        ? prev.filter((k) => k !== keyword)
         : [...prev, keyword]
     );
     setError(null);
@@ -35,49 +51,66 @@ export default function Onboarding() {
 
   const handleAddCustomKeyword = () => {
     if (!customKeyword.trim()) return;
-    
+
     if (selectedKeywords.length >= 10) {
-      setError('You can only select up to 10 keywords');
+      setError("You can only select up to 10 keywords");
       return;
     }
 
     if (selectedKeywords.includes(customKeyword.trim())) {
-      setError('This keyword is already selected');
+      setError("This keyword is already selected");
       return;
     }
 
-    setSelectedKeywords(prev => [...prev, customKeyword.trim()]);
-    setCustomKeyword('');
+    setSelectedKeywords((prev) => [...prev, customKeyword.trim()]);
+    setCustomKeyword("");
     setError(null);
   };
 
   const handleSubmit = async () => {
-    if (!user) return;
-    
+    if (!user) {
+      console.log("No user found");
+      return;
+    }
+
     if (selectedKeywords.length === 0) {
-      setError('Please select at least one keyword');
+      setError("Please select at least one keyword");
       return;
     }
 
     setLoading(true);
     try {
+      console.log("Attempting to save preferences...");
       const { error: updateError } = await supabase
-        .from('user_preferences')
-        .upsert({
-          user_id: user.id,
-          keywords: selectedKeywords,
-          onboarded: true,
-          first_name: user.user_metadata.first_name,
-          last_name: user.user_metadata.last_name
-        }, {
-          onConflict: 'user_id'
-        });
+        .from("user_preferences")
+        .upsert(
+          {
+            user_id: user.id,
+            keywords: selectedKeywords,
+            onboarded: true,
+            first_name: user.user_metadata.first_name,
+            last_name: user.user_metadata.last_name,
+          },
+          {
+            onConflict: "user_id",
+          }
+        );
 
-      if (updateError) throw updateError;
-      navigate('/', { replace: true });
+      if (updateError) {
+        console.error("Update error:", updateError);
+        throw updateError;
+      }
+
+      console.log("Preferences saved successfully");
+
+      // Add a small delay to ensure the database update is processed
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      console.log("Attempting to navigate to root...");
+      navigate("/", { replace: true });
     } catch (err) {
-      console.error('Failed to save preferences:', err);
-      setError('Failed to save preferences. Please try again.');
+      console.error("Failed to save preferences:", err);
+      setError("Failed to save preferences. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -95,15 +128,18 @@ export default function Onboarding() {
           </div>
           <h2 className="text-2xl font-semibold mb-3">Personalize Your News</h2>
           <p className="text-gray-400">
-            Select up to 10 topics you're interested in to help us customize your news feed
+            Select up to 10 topics you're interested in to help us customize
+            your news feed
           </p>
         </div>
 
         {/* Selected Keywords */}
         <div className="mb-8">
-          <h3 className="text-lg font-medium mb-3">Your Selected Topics ({selectedKeywords.length}/10)</h3>
+          <h3 className="text-lg font-medium mb-3">
+            Your Selected Topics ({selectedKeywords.length}/10)
+          </h3>
           <div className="flex flex-wrap gap-2">
-            {selectedKeywords.map(keyword => (
+            {selectedKeywords.map((keyword) => (
               <button
                 key={keyword}
                 onClick={() => handleKeywordClick(keyword)}
@@ -126,7 +162,7 @@ export default function Onboarding() {
               onChange={(e) => setCustomKeyword(e.target.value)}
               placeholder="Enter a custom topic"
               className="flex-1 px-4 py-2 bg-gray-800/50 border border-gray-700/50 rounded-lg text-gray-200 placeholder-gray-500 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20"
-              onKeyPress={(e) => e.key === 'Enter' && handleAddCustomKeyword()}
+              onKeyPress={(e) => e.key === "Enter" && handleAddCustomKeyword()}
             />
             <button
               onClick={handleAddCustomKeyword}
@@ -142,14 +178,14 @@ export default function Onboarding() {
         <div className="mb-8">
           <h3 className="text-lg font-medium mb-3">Suggested Topics</h3>
           <div className="flex flex-wrap gap-2">
-            {suggestedKeywords.map(keyword => (
+            {suggestedKeywords.map((keyword) => (
               <button
                 key={keyword}
                 onClick={() => handleKeywordClick(keyword)}
                 className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                   selectedKeywords.includes(keyword)
-                    ? 'bg-blue-500/20 text-blue-400'
-                    : 'bg-gray-800/50 text-gray-300 hover:bg-gray-800'
+                    ? "bg-blue-500/20 text-blue-400"
+                    : "bg-gray-800/50 text-gray-300 hover:bg-gray-800"
                 }`}
               >
                 {keyword}

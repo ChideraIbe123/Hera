@@ -1,18 +1,18 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { MessageSquare, Send, X, Loader2 } from 'lucide-react';
-import { ChatHistory } from './ChatHistory';
-import { ChatInput } from './ChatInput';
-import { ChatMessages } from './ChatMessages';
-import { useAuth } from './AuthProvider';
-import { 
-  Message, 
-  ConversationMeta, 
-  getConversations, 
-  getConversation, 
+import React, { useState, useEffect, useRef } from "react";
+import { MessageSquare, Send, X, Loader2 } from "lucide-react";
+import { ChatHistory } from "./ChatHistory";
+import { ChatInput } from "./ChatInput";
+import { ChatMessages } from "./ChatMessages";
+import { useAuth } from "./AuthProvider";
+import {
+  Message,
+  ConversationMeta,
+  getConversations,
+  getConversation,
   createConversation,
   updateConversation,
-  deleteConversation
-} from '../lib/chatService';
+  deleteConversation,
+} from "../lib/chatService";
 
 interface ChatBoxProps {
   isOpen: boolean;
@@ -38,7 +38,7 @@ export function ChatBox({ isOpen, onClose }: ChatBoxProps) {
       const convs = await getConversations(user.id);
       setConversations(convs);
     } catch (error) {
-      console.error('Failed to load conversations:', error);
+      console.error("Failed to load conversations:", error);
     }
   };
 
@@ -50,7 +50,7 @@ export function ChatBox({ isOpen, onClose }: ChatBoxProps) {
         setMessages(conv.messages);
       }
     } catch (error) {
-      console.error('Failed to load conversation:', error);
+      console.error("Failed to load conversation:", error);
     }
   };
 
@@ -60,17 +60,18 @@ export function ChatBox({ isOpen, onClose }: ChatBoxProps) {
   };
 
   const handleDeleteConversation = async (id: number) => {
-    if (!window.confirm('Are you sure you want to delete this conversation?')) return;
-    
+    if (!window.confirm("Are you sure you want to delete this conversation?"))
+      return;
+
     try {
       await deleteConversation(id);
-      setConversations(prev => prev.filter(c => c.id !== id));
+      setConversations((prev) => prev.filter((c) => c.id !== id));
       if (currentConversationId === id) {
         setCurrentConversationId(undefined);
         setMessages([]);
       }
     } catch (error) {
-      console.error('Failed to delete conversation:', error);
+      console.error("Failed to delete conversation:", error);
     }
   };
 
@@ -81,41 +82,71 @@ export function ChatBox({ isOpen, onClose }: ChatBoxProps) {
       id: Date.now(),
       text,
       isBot: false,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
 
     setLoading(true);
     try {
       let conversationId = currentConversationId;
-      
+
       if (!conversationId) {
-        conversationId = await createConversation(user.id, text.substring(0, 50) + '...');
+        conversationId = await createConversation(
+          user.id,
+          text.substring(0, 50) + "..."
+        );
         setCurrentConversationId(conversationId);
-        setConversations(prev => [{
-          id: conversationId,
-          title: text.substring(0, 50) + '...'
-        }, ...prev]);
+        setConversations((prev) => [
+          {
+            id: conversationId,
+            title: text.substring(0, 50) + "...",
+          },
+          ...prev,
+        ]);
       }
 
       const updatedMessages = [...messages, newMessage];
       setMessages(updatedMessages);
 
-      // Simulate bot response
-      setTimeout(() => {
-        const botMessage: Message = {
-          id: Date.now(),
-          text: "I'm processing your request. How can I help you further?",
-          isBot: true,
-          timestamp: new Date().toISOString()
-        };
-        
-        const finalMessages = [...updatedMessages, botMessage];
-        setMessages(finalMessages);
-        updateConversation(conversationId!, finalMessages);
-        setLoading(false);
-      }, 1000);
+      // Send message to backend
+      const response = await fetch("http://localhost:5000/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: text,
+          conversation_id: conversationId,
+          messages: updatedMessages,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to get response from AI");
+      }
+
+      const data = await response.json();
+
+      const botMessage: Message = {
+        id: Date.now(),
+        text: data.response,
+        isBot: true,
+        timestamp: new Date().toISOString(),
+      };
+
+      const finalMessages = [...updatedMessages, botMessage];
+      setMessages(finalMessages);
+      await updateConversation(conversationId!, finalMessages);
     } catch (error) {
-      console.error('Failed to send message:', error);
+      console.error("Failed to send message:", error);
+      // Add error message to chat
+      const errorMessage: Message = {
+        id: Date.now(),
+        text: "Sorry, I encountered an error processing your request.",
+        isBot: true,
+        timestamp: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
       setLoading(false);
     }
   };
@@ -132,7 +163,7 @@ export function ChatBox({ isOpen, onClose }: ChatBoxProps) {
           currentConversationId={currentConversationId}
           onNewChat={handleNewChat}
         />
-        
+
         <div className="flex-1 flex flex-col bg-gradient-to-b from-gray-900 to-gray-800">
           {/* Header */}
           <div className="p-4 border-b border-gray-800/50 flex items-center justify-between bg-gray-900/95 backdrop-blur-sm">
@@ -145,7 +176,7 @@ export function ChatBox({ isOpen, onClose }: ChatBoxProps) {
                 <p className="text-xs text-gray-400">Always here to help</p>
               </div>
             </div>
-            <button 
+            <button
               onClick={onClose}
               className="p-2 hover:bg-gray-800/50 rounded-full transition-colors"
             >
@@ -157,8 +188,8 @@ export function ChatBox({ isOpen, onClose }: ChatBoxProps) {
           <ChatMessages messages={messages} />
 
           {/* Input */}
-          <ChatInput 
-            onSend={handleSend} 
+          <ChatInput
+            onSend={handleSend}
             disabled={loading}
             placeholder={loading ? "AI is thinking..." : "Type your message..."}
           />
