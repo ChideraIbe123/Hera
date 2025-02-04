@@ -1,13 +1,44 @@
-import React from 'react';
+import React, { useEffect, useState } from "react";
+import { supabase } from "../lib/supabase";
 
 interface ScrollingKeywordsProps {
   title: string;
-  keywords: string[];
+  userId: string;
 }
 
-export function ScrollingKeywords({ title, keywords }: ScrollingKeywordsProps) {
-  // Double the keywords array to ensure smooth infinite scrolling
-  const duplicatedKeywords = [...keywords, ...keywords, ...keywords, ...keywords];
+export function ScrollingKeywords({ title, userId }: ScrollingKeywordsProps) {
+  const [keywords, setKeywords] = useState<string[]>([]);
+
+  useEffect(() => {
+    async function fetchUserInterests() {
+      const { data, error } = await supabase
+        .from("user_preferences")
+        .select("keywords")
+        .eq("user_id", userId)
+        .single();
+
+      if (error) {
+        console.error("Error fetching user interests:", error);
+        return;
+      }
+
+      if (data?.keywords) {
+        setKeywords(data.keywords);
+      }
+    }
+
+    fetchUserInterests();
+  }, [userId]);
+
+  // Multiply keywords array to ensure continuous scrolling
+  const duplicatedKeywords = [
+    ...keywords,
+    ...keywords,
+    ...keywords,
+    ...keywords,
+    ...keywords,
+    ...keywords,
+  ];
 
   return (
     <div className="bg-gray-900/30 rounded-2xl p-8 border border-gray-800/50 shadow-lg backdrop-blur-sm">
@@ -15,7 +46,12 @@ export function ScrollingKeywords({ title, keywords }: ScrollingKeywordsProps) {
         {title}
       </h3>
       <div className="overflow-hidden relative rounded-xl bg-gray-800/30 py-4">
-        <div className="flex animate-scroll whitespace-nowrap">
+        <div
+          className="flex animate-scroll whitespace-nowrap"
+          style={{
+            animation: "scroll 60s linear infinite",
+          }}
+        >
           {duplicatedKeywords.map((keyword, index) => (
             <span
               key={index}
