@@ -9,17 +9,56 @@ const supabase = createClient(
 export async function getArticles() {
   const { data, error } = await supabase
     .from('Articles')
-    .select('id, title, link, snippet, time_scraped, source, created_at, image_url, query_term');
+    .select('id, title, link, snippet, time_scraped, source, created_at, image_url, query_term, grouping');
 
   if (error) throw error;
 
   const shuffledData = data ? [...data].sort(() => Math.random() - 0.5) : [];
+
+  // Calculate hours ago for each article
+  const now = new Date();
+  shuffledData.forEach(article => {
+    if (article.time_scraped && article.created_at) {
+      // Parse the time_scraped string
+      let timeOffset = 0;
+      const timeStr = article.time_scraped.toLowerCase();
+      
+      if (timeStr.includes('live')) {
+        // Extract minutes from "LIVE13 minutes ago" format
+        const minutes = parseInt(timeStr.match(/\d+/)?.[0] || '0');
+        timeOffset = minutes * 60 * 1000; // Convert to milliseconds
+      } else if (timeStr.includes('minutes')) {
+        const minutes = parseInt(timeStr.match(/\d+/)?.[0] || '0');
+        timeOffset = minutes * 60 * 1000;
+      } else if (timeStr.includes('hours')) {
+        const hours = parseInt(timeStr.match(/\d+/)?.[0] || '0');
+        timeOffset = hours * 60 * 60 * 1000;
+      }
+
+      // Get the actual scraped time by subtracting offset from created_at
+      const createdDate = new Date(article.created_at);
+      const scrapedDate = new Date(createdDate.getTime() - timeOffset);
+      
+      // Calculate time difference from now
+      const diffMinutes = Math.floor((now.getTime() - scrapedDate.getTime()) / (1000 * 60));
+
+      if (diffMinutes < 1) {
+        (article as any).time = 'LIVE';
+      } else if (diffMinutes < 60) {
+        (article as any).time = `LIVE${diffMinutes} minutes ago`;
+      } else {
+        const diffHours = Math.floor(diffMinutes / 60);
+        (article as any).time = `${diffHours} hours ago`;
+      }
+    }
+  });
 
   return shuffledData.map(article => ({
     id: article.id,
     title: article.title, 
     image: article.image_url,
     link: article.link,
+    time: (article as any).time, // Using the time constant calculated in the forEach loop above
     // category: article.category
   })) || [];
 }
@@ -41,12 +80,12 @@ export async function getInsights() {
   // return await response.json();
   const { data, error } = await supabase
     .from('Articles')
-    .select('id, title, link, snippet, time_scraped, source, created_at, image_url, query_term');
+    .select('id, title, link, snippet, time_scraped, source, created_at, image_url, query_term, grouping');
 
   if (error) throw error;
 
   const groupedArticles = data.reduce((acc: { [key: string]: any[] }, article) => {
-    const group = article.query_term || 'Other';
+    const group = article.grouping || 'Other';
     if (!acc[group]) {
       acc[group] = [];
     }
