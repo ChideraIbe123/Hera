@@ -16,18 +16,19 @@ export default function Dashboard() {
   const [tailoredArticles, setTailoredArticles] = useState<
     Array<{ id: any; title: any; image: any; link: any }>
   >([]);
-  const [topics, setTopics] = useState<Array<{
-    id: number;
-    name: string;
-    icon: any;
-    color: string;
-    stories: any[];
-  }>>([]);
+  const [topics, setTopics] = useState<
+    Array<{
+      id: number;
+      name: string;
+      icon: any;
+      color: string;
+      stories: any[];
+    }>
+  >([]);
 
   useEffect(() => {
     getArticles().then((articles) => setPopularArticles(articles));
   }, []);
-
 
   const { user } = useAuth();
 
@@ -56,7 +57,7 @@ export default function Dashboard() {
             title="General News"
             icon={<TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-red-400" />}
             items={popularArticles}
-            type="tailored"
+            type="popular"
           />
         </section>
         <section id="topics">

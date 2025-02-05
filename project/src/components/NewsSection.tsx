@@ -24,7 +24,6 @@ interface NewsSectionProps {
 export function NewsSection({ title, icon, items, type }: NewsSectionProps) {
   const { user } = useAuth();
 
-
   return (
     <section className="space-y-6">
       <div className="bg-gray-900/30 rounded-2xl p-4 sm:p-6 lg:p-8 backdrop-blur-sm border border-gray-800/50 transition-all duration-300 hover:bg-gray-900/40">
@@ -85,22 +84,16 @@ export function NewsSection({ title, icon, items, type }: NewsSectionProps) {
         </div>
       </div>
 
-      {/* If the type is "tailored", show only the tailored keywords scrolling */}
-      {user && type === "tailored" && (
+      {/* Show scrolling keywords based on type */}
+      {type === "tailored" ? (
         <ScrollingKeywords
-          // Adjust the title to reflect that these are your tailored keywords.
           title="Key Words from Your Conversations"
-          userId={user.id}
-          // No endpoint is needed for tailored keywords.
+          userId={user?.id || ""}
         />
-      )}
-
-      {/* If the type is "popular", show only the general/popular keywords scrolling */}
-      {user && type === "popular" && (
+      ) : (
         <ScrollingGeneral
-          // This title reflects that these keywords come from general/popular news.
           title="Popular News Keywords"
-          userId={user.id}
+          userId={user?.id || ""}
           endpoint="http://localhost:5000/api/insights"
         />
       )}
