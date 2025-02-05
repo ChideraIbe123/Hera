@@ -1,5 +1,6 @@
 import { Globe, Briefcase, Microscope, Camera, Code, Heart } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
+import { useAuth } from "./components/AuthProvider";
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL!,
@@ -64,20 +65,6 @@ export async function getArticles() {
 }
 
 export async function getInsights() {
-  // const response = await fetch('/api/insights', {
-  //   method: 'POST',
-  //   headers: {
-  //     'Content-Type': 'application/json',
-  //   },
-  //   body: JSON.stringify({
-  //     user_id: 'default' // You may want to pass a real user ID if available
-  //   })
-  // });
-
-  // if (!response.ok) {
-  //   throw new Error('Failed to fetch insights');
-  // }
-  // return await response.json();
   const { data, error } = await supabase
     .from('Articles')
     .select('id, title, link, snippet, time_scraped, source, created_at, image_url, query_term, grouping');
@@ -108,22 +95,85 @@ export async function getInsights() {
   }));
 
   return topics;
-  
-  // const shuffledData = data ? [...data].sort(() => Math.random() - 0.5) : [];
-
-  // return shuffledData.map(article => ({
-  //   id: article.id,
-  //   title: article.title, 
-  //   image: article.image_url,
-  //   link: article.link,
-  //   // category: article.category
-  // })) || [];
-
-
-
-  return topics;
 }
 
+export async function getTailoredNews(user: any) {
+
+  // Return empty array if no user
+  if (!user) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from('user_preferences')
+    .select('ranked_articles')
+    .eq('user_id', user.id)
+    .single();
+
+  if (error) throw error;
+  if (!data?.ranked_articles) {
+    return [];
+  }
+
+  const articleIds = data.ranked_articles;
+
+  // Get the full article information for each ranked article id
+  const { data: articles, error: articlesError } = await supabase
+    .from('Articles')
+    .select('id, title, link, snippet, time_scraped, source, created_at, image_url, query_term, grouping')
+    .in('id', articleIds);
+
+  if (articlesError) throw articlesError;
+  
+  const sortedArticles = articles?.sort((a, b) => 
+    articleIds.indexOf(a.id) - articleIds.indexOf(b.id)
+  ) || [];
+
+  const now = new Date();
+  sortedArticles.forEach(article => {
+    if (article.time_scraped && article.created_at) {
+      // Parse the time_scraped string
+      let timeOffset = 0;
+      const timeStr = article.time_scraped.toLowerCase();
+      
+      if (timeStr.includes('live')) {
+        // Extract minutes from "LIVE13 minutes ago" format
+        const minutes = parseInt(timeStr.match(/\d+/)?.[0] || '0');
+        timeOffset = minutes * 60 * 1000; // Convert to milliseconds
+      } else if (timeStr.includes('minutes')) {
+        const minutes = parseInt(timeStr.match(/\d+/)?.[0] || '0');
+        timeOffset = minutes * 60 * 1000;
+      } else if (timeStr.includes('hours')) {
+        const hours = parseInt(timeStr.match(/\d+/)?.[0] || '0');
+        timeOffset = hours * 60 * 60 * 1000;
+      }
+
+      // Get the actual scraped time by subtracting offset from created_at
+      const createdDate = new Date(article.created_at);
+      const scrapedDate = new Date(createdDate.getTime() - timeOffset);
+      
+      // Calculate time difference from now
+      const diffMinutes = Math.floor((now.getTime() - scrapedDate.getTime()) / (1000 * 60));
+
+      if (diffMinutes < 1) {
+        (article as any).time = 'LIVE';
+      } else if (diffMinutes < 60) {
+        (article as any).time = `LIVE${diffMinutes} minutes ago`;
+      } else {
+        const diffHours = Math.floor(diffMinutes / 60);
+        (article as any).time = `${diffHours} hours ago`;
+      }
+    }
+  });
+
+  return sortedArticles.map(article => ({
+    id: article.id,
+    title: article.title,
+    image: article.image_url,
+    link: article.link,
+    time: (article as any).time
+  }));
+}
 
 
 export const tailoredNews = [

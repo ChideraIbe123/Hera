@@ -5,11 +5,15 @@ import { ChatBox } from "../components/ChatBox";
 import { NewsSection } from "../components/NewsSection";
 import { TopicsSection } from "../components/TopicsSection";
 import { Footer } from "../components/Footer";
-import { getArticles, popularNews, getInsights } from "../data";
+import { getArticles, getTailoredNews, getInsights } from "../data";
+import { useAuth } from "../components/AuthProvider";
 
 export default function Dashboard() {
   const [chatOpen, setChatOpen] = useState(false);
   const [popularArticles, setPopularArticles] = useState<
+    Array<{ id: any; title: any; image: any; link: any }>
+  >([]);
+  const [tailoredArticles, setTailoredArticles] = useState<
     Array<{ id: any; title: any; image: any; link: any }>
   >([]);
   const [topics, setTopics] = useState<Array<{
@@ -24,6 +28,13 @@ export default function Dashboard() {
     getArticles().then((articles) => setPopularArticles(articles));
   }, []);
 
+
+  const { user } = useAuth();
+
+  useEffect(() => {
+    getTailoredNews(user).then((articles) => setTailoredArticles(articles));
+  }, []);
+
   useEffect(() => {
     getInsights().then((insights) => setTopics(insights));
   }, []);
@@ -36,8 +47,8 @@ export default function Dashboard() {
         <section id="tailored">
           <NewsSection
             title="Tailored For You"
-            items={popularArticles}
-            type="popular"
+            items={tailoredArticles}
+            type="tailored"
           />
         </section>
         <section id="general">
