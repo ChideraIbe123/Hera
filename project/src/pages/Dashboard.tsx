@@ -5,16 +5,27 @@ import { ChatBox } from "../components/ChatBox";
 import { NewsSection } from "../components/NewsSection";
 import { TopicsSection } from "../components/TopicsSection";
 import { Footer } from "../components/Footer";
-import { getArticles, popularNews, topics } from "../data";
+import { getArticles, popularNews, getInsights } from "../data";
 
 export default function Dashboard() {
   const [chatOpen, setChatOpen] = useState(false);
   const [tailoredArticles, setTailoredArticles] = useState<
     Array<{ id: any; title: any; image: any; link: any }>
   >([]);
+  const [topics, setTopics] = useState<Array<{
+    id: number;
+    name: string;
+    icon: any;
+    color: string;
+    stories: any[];
+  }>>([]);
 
   useEffect(() => {
     getArticles().then((articles) => setTailoredArticles(articles));
+  }, []);
+
+  useEffect(() => {
+    getInsights().then((insights) => setTopics(insights));
   }, []);
 
   return (

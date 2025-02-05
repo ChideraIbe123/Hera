@@ -23,6 +23,7 @@ interface NewsSectionProps {
 export function NewsSection({ title, icon, items, type }: NewsSectionProps) {
   const { user } = useAuth();
 
+
   return (
     <section className="space-y-6">
       <div className="bg-gray-900/30 rounded-2xl p-4 sm:p-6 lg:p-8 backdrop-blur-sm border border-gray-800/50 transition-all duration-300 hover:bg-gray-900/40">

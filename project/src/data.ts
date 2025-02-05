@@ -1,6 +1,11 @@
 import { Globe, Briefcase, Microscope, Camera, Code, Heart } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL!,
+  import.meta.env.VITE_SUPABASE_ANON_KEY!
+);
+
 export async function getArticles() {
   const { data, error } = await supabase
     .from('Articles')
@@ -8,7 +13,6 @@ export async function getArticles() {
 
   if (error) throw error;
 
-  // Shuffle the articles using Fisher-Yates algorithm
   const shuffledData = data ? [...data].sort(() => Math.random() - 0.5) : [];
 
   return shuffledData.map(article => ({
@@ -20,10 +24,68 @@ export async function getArticles() {
   })) || [];
 }
 
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL!,
-  import.meta.env.VITE_SUPABASE_ANON_KEY!
-);
+export async function getInsights() {
+  // const response = await fetch('/api/insights', {
+  //   method: 'POST',
+  //   headers: {
+  //     'Content-Type': 'application/json',
+  //   },
+  //   body: JSON.stringify({
+  //     user_id: 'default' // You may want to pass a real user ID if available
+  //   })
+  // });
+
+  // if (!response.ok) {
+  //   throw new Error('Failed to fetch insights');
+  // }
+  // return await response.json();
+  const { data, error } = await supabase
+    .from('Articles')
+    .select('id, title, link, snippet, time_scraped, source, created_at, image_url, query_term');
+
+  if (error) throw error;
+
+  const groupedArticles = data.reduce((acc: { [key: string]: any[] }, article) => {
+    const group = article.query_term || 'Other';
+    if (!acc[group]) {
+      acc[group] = [];
+    }
+    acc[group].push({
+      id: article.id,
+      title: article.title,
+      summary: article.snippet,
+      image: article.image_url || 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=800',
+      link: article.link
+    });
+    return acc;
+  }, {});
+
+  const topics = Object.entries(groupedArticles).map(([name, stories], index) => ({
+    id: index + 1,
+    name: name,
+    icon: [Globe, Briefcase, Microscope, Camera, Code, Heart][index % 6],
+    color: ['blue', 'green', 'purple', 'pink', 'yellow', 'red'][index % 6],
+    stories: stories
+  }));
+
+  return topics;
+  
+  // const shuffledData = data ? [...data].sort(() => Math.random() - 0.5) : [];
+
+  // return shuffledData.map(article => ({
+  //   id: article.id,
+  //   title: article.title, 
+  //   image: article.image_url,
+  //   link: article.link,
+  //   // category: article.category
+  // })) || [];
+
+
+
+  return topics;
+}
+
+
 
 export const tailoredNews = [
   {
