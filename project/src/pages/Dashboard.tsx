@@ -9,7 +9,7 @@ import { getArticles, popularNews, getInsights } from "../data";
 
 export default function Dashboard() {
   const [chatOpen, setChatOpen] = useState(false);
-  const [tailoredArticles, setTailoredArticles] = useState<
+  const [popularArticles, setPopularArticles] = useState<
     Array<{ id: any; title: any; image: any; link: any }>
   >([]);
   const [topics, setTopics] = useState<Array<{
@@ -21,7 +21,7 @@ export default function Dashboard() {
   }>>([]);
 
   useEffect(() => {
-    getArticles().then((articles) => setTailoredArticles(articles));
+    getArticles().then((articles) => setPopularArticles(articles));
   }, []);
 
   useEffect(() => {
@@ -36,16 +36,16 @@ export default function Dashboard() {
         <section id="tailored">
           <NewsSection
             title="Tailored For You"
-            items={tailoredArticles}
-            type="tailored"
+            items={popularArticles}
+            type="popular"
           />
         </section>
         <section id="general">
           <NewsSection
             title="General News"
             icon={<TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-red-400" />}
-            items={popularNews}
-            type="popular"
+            items={popularArticles}
+            type="tailored"
           />
         </section>
         <section id="topics">
