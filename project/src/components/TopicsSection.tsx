@@ -6,6 +6,7 @@ interface Story {
   title: string;
   summary: string;
   image: string;
+  link?: string;
 }
 
 interface Topic {
@@ -38,10 +39,15 @@ export function TopicsSection({ topics }: TopicsSectionProps) {
                   </h3>
                 </div>
               </div>
-              <div className="divide-y divide-gray-800/50">
+              <div className="divide-y divide-gray-800/50 max-h-[400px] overflow-y-auto">
                 {topic.stories.map((story) => (
                   <div key={story.id} className="p-4 sm:p-6 hover:bg-gray-800/30 transition-colors duration-200">
-                    <div className="flex space-x-4 sm:space-x-5">
+                    <a
+                      href={story.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`flex space-x-4 sm:space-x-5 ${story.link ? 'cursor-pointer' : 'cursor-default'}`}
+                    >
                       <img
                         src={story.image}
                         alt={story.title}
@@ -55,14 +61,10 @@ export function TopicsSection({ topics }: TopicsSectionProps) {
                           {story.summary}
                         </p>
                       </div>
-                    </div>
+                    </a>
                   </div>
                 ))}
               </div>
-              <button className="w-full p-3 sm:p-4 text-blue-400 hover:text-blue-300 transition-colors duration-200 flex items-center justify-center space-x-2 border-t border-gray-800/50 bg-gray-900/50 group">
-                <span className="text-sm font-medium">Show more stories</span>
-                <ChevronDown className="w-4 h-4 group-hover:translate-y-0.5 transition-transform duration-200" />
-              </button>
             </div>
           );
         })}

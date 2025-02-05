@@ -7,12 +7,20 @@ import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from supabase import create_client, Client
 from google_querying import get_insights
+from dotenv import load_dotenv
+import os
+import time
+from flask_caching import Cache
+
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
 
-VITE_SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ybXdpaXNmdG15dHhzZXdrd3ZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzgyOTExMTQsImV4cCI6MjA1Mzg2NzExNH0.xPunHD5-T7WqYT4e9lefWqpT1WM_PyKTZQigtk_xqO4"
-VITE_SUPABASE_URL="https://ormwiisftmytxsewkwvp.supabase.co"
+cache = Cache(app, config={'CACHE_TYPE': 'simple'})
+
+VITE_SUPABASE_ANON_KEY=os.getenv("VITE_SUPABASE_ANON_KEY")
+VITE_SUPABASE_URL=os.getenv("VITE_SUPABASE_URL")
 
 supabase: Client = create_client(
     VITE_SUPABASE_URL,
@@ -90,6 +98,31 @@ def retrieve_context(query: str, k: int = 3) -> str:
 
 @app.route("/api/insights", methods=["POST"])
 def insights():
+    print("Getting insights")
+    data = request.json
+    current_time = int(time.time())
+    last_run_key = f"last_insights_run_{data.get('user_id')}"
+    
+    last_run = cache.get(last_run_key)
+    if last_run and current_time - last_run < 10800:
+        return jsonify({"message": "Skipped insights check - too soon"})
+        
+    cache.set(last_run_key, current_time)
+
+    try:
+        # Run the main function from google_querying.py
+        from google_querying import query_google
+        query_google()
+        # After running main, get the insights
+        from general_labeling import labeling
+        cluster_dict = labeling()
+        return jsonify(cluster_dict)
+    except Exception as e:
+        print(f"Error running insights: {str(e)}")
+        return jsonify({"error": "Failed to run insights"}), 500
+    
+
+
     return jsonify(get_insights())
 
 @app.route("/api/chat", methods=["POST"])

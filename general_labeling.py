@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import os
 from supabase import create_client, Client
 
-def main():
+def labeling():
     VITE_SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ybXdpaXNmdG15dHhzZXdrd3ZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzgyOTExMTQsImV4cCI6MjA1Mzg2NzExNH0.xPunHD5-T7WqYT4e9lefWqpT1WM_PyKTZQigtk_xqO4"
     VITE_SUPABASE_URL="https://ormwiisftmytxsewkwvp.supabase.co"
 
@@ -29,7 +29,8 @@ def main():
     order_centroids = kmeans.cluster_centers_.argsort()[:, ::-1]
     terms = vectorizer.get_feature_names_out()
 
-    print("Automatically generated topic labels:")
+    # print("Automatically generated topic labels:")
+    cluster_dict = {}
     for i in range(num_clusters):
         top_terms = [terms[ind] for ind in order_centroids[i, :2]]  
         label = " ".join(top_terms)
@@ -40,7 +41,8 @@ def main():
 
 
         cluster_titles = np.array(titles)[clusters == i]
-        print(" Titles in this cluster:")
+        cluster_dict[label] = cluster_titles.tolist()
+        # print(" Titles in this cluster:")
         for title in cluster_titles:
             try:
                 article_response = supabase.table("Articles").select("id").eq("title", title).execute()
@@ -50,8 +52,9 @@ def main():
                     supabase.table("Articles").update({"grouping": label}).eq("id", article_id).execute()
             except Exception as e:
                 print(f"Error updating grouping for title '{title}': {str(e)}")
-            print(f"  - {title}")
-        print()
+            # print(f"  - {title}")
+        # print()
+    return cluster_dict
 
 if __name__ == "__main__":
-    main()
+    labeling()

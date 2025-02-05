@@ -40,7 +40,7 @@ def get_high_res_image(page_url):
     except Exception:
         return None
 
-def main():
+def query_google():
     conn = http.client.HTTPSConnection("google.serper.dev")
     payload = json.dumps([
         {
@@ -92,4 +92,4 @@ def main():
     supabase.table("Articles").insert(df.to_dict(orient="records")).execute()
 
 if __name__ == "__main__":
-    main()
+    query_google()

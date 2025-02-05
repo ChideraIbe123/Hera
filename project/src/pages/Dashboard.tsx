@@ -5,16 +5,38 @@ import { ChatBox } from "../components/ChatBox";
 import { NewsSection } from "../components/NewsSection";
 import { TopicsSection } from "../components/TopicsSection";
 import { Footer } from "../components/Footer";
-import { getArticles, popularNews, topics } from "../data";
+import { getArticles, getTailoredNews, getInsights } from "../data";
+import { useAuth } from "../components/AuthProvider";
 
 export default function Dashboard() {
   const [chatOpen, setChatOpen] = useState(false);
+  const [popularArticles, setPopularArticles] = useState<
+    Array<{ id: any; title: any; image: any; link: any }>
+  >([]);
   const [tailoredArticles, setTailoredArticles] = useState<
     Array<{ id: any; title: any; image: any; link: any }>
   >([]);
+  const [topics, setTopics] = useState<Array<{
+    id: number;
+    name: string;
+    icon: any;
+    color: string;
+    stories: any[];
+  }>>([]);
 
   useEffect(() => {
-    getArticles().then((articles) => setTailoredArticles(articles));
+    getArticles().then((articles) => setPopularArticles(articles));
+  }, []);
+
+
+  const { user } = useAuth();
+
+  useEffect(() => {
+    getTailoredNews(user).then((articles) => setTailoredArticles(articles));
+  }, []);
+
+  useEffect(() => {
+    getInsights().then((insights) => setTopics(insights));
   }, []);
 
   return (
@@ -33,8 +55,8 @@ export default function Dashboard() {
           <NewsSection
             title="General News"
             icon={<TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-red-400" />}
-            items={popularNews}
-            type="popular"
+            items={popularArticles}
+            type="tailored"
           />
         </section>
         <section id="topics">

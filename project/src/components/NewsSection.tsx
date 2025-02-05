@@ -8,6 +8,7 @@ interface NewsItem {
   id: number;
   title: string;
   image: string;
+  time?: string;
   category?: string;
   views?: string;
   link?: string;
@@ -22,6 +23,7 @@ interface NewsSectionProps {
 
 export function NewsSection({ title, icon, items, type }: NewsSectionProps) {
   const { user } = useAuth();
+
 
   return (
     <section className="space-y-6">
@@ -68,7 +70,7 @@ export function NewsSection({ title, icon, items, type }: NewsSectionProps) {
                         } text-xs px-3 py-1.5 rounded-full font-medium shadow-lg inline-block transform transition-all duration-300 group-hover:scale-105`}
                       >
                         {type === "tailored"
-                          ? item.category
+                          ? item.time
                           : `${item.views} views`}
                       </span>
                       <h3 className="text-lg sm:text-xl font-bold mt-3 line-clamp-2 leading-tight group-hover:text-blue-300 transition-colors duration-200">
