@@ -16,7 +16,6 @@ def main():
 
     response = supabase.table("Articles").select("title").execute()
 
-    # Extract titles into a list
     titles = [article['title'] for article in response.data]
 
     vectorizer = TfidfVectorizer(stop_words='english')
@@ -32,8 +31,7 @@ def main():
 
     print("Automatically generated topic labels:")
     for i in range(num_clusters):
-        top_terms = [terms[ind] for ind in order_centroids[i, :2]]  # Select top 2 words
-        # You can customize the label format. Here we simply join the words.
+        top_terms = [terms[ind] for ind in order_centroids[i, :2]]  
         label = " ".join(top_terms)
         
 
