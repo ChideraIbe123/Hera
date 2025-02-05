@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { supabase } from "../lib/supabase";
 
 interface ScrollingKeywordsProps {
   title: string;
@@ -7,33 +6,26 @@ interface ScrollingKeywordsProps {
   endpoint?: string;
 }
 
-export function ScrollingKeywords({
-  title,
-  userId,
-  endpoint,
-}: ScrollingKeywordsProps) {
+export function ScrollingGeneral({ title }: ScrollingKeywordsProps) {
   const [keywords, setKeywords] = useState<string[]>([]);
 
   useEffect(() => {
-    async function fetchUserInterests() {
-      const { data, error } = await supabase
-        .from("user_preferences")
-        .select("keywords")
-        .eq("user_id", userId)
-        .single();
-
-      if (error) {
-        console.error("Error fetching user interests:", error);
-        return;
-      }
-
-      if (data?.keywords) {
-        setKeywords(data.keywords);
+    async function fetchKeywords() {
+      try {
+        const response = await fetch("http://localhost:5000/api/insights", {
+          method: "POST",
+        });
+        const data = await response.json();
+        if (data) {
+          setKeywords(data);
+        }
+      } catch (error) {
+        console.error("Error fetching keywords:", error);
       }
     }
 
-    fetchUserInterests();
-  }, [userId]);
+    fetchKeywords();
+  }, []);
 
   // Multiply keywords array to ensure continuous scrolling
   const duplicatedKeywords = Array.from(

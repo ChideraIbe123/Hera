@@ -55,7 +55,6 @@ def extract_keywords_from_db():
     ]
 
     try:
-        # Get all conversations
         response = supabase.table('conversations').select('id', 'user_id', 'messages').execute()
         conversations = response.data
         if not conversations:
@@ -63,8 +62,6 @@ def extract_keywords_from_db():
             return
 
         print(f"Found {len(conversations)} conversations")
-
-        # Group messages by user
         user_messages = defaultdict(str)
         
         for conversation in conversations:
@@ -76,7 +73,6 @@ def extract_keywords_from_db():
                 
             print(f"Processing conversation for user {user_id}")
             
-            # Combine all messages for this user into a single string
             message_text = ""
             for message in messages:
                 if isinstance(message, dict):

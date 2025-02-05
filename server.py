@@ -6,6 +6,7 @@ import json
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from supabase import create_client, Client
+from google_querying import get_insights
 
 app = Flask(__name__)
 CORS(app)
@@ -86,6 +87,10 @@ def retrieve_context(query: str, k: int = 3) -> str:
     
     context = "\n\n".join(doc["content"] for doc in top_docs if doc.get("content"))
     return context
+
+@app.route("/api/insights", methods=["POST"])
+def insights():
+    return jsonify(get_insights())
 
 @app.route("/api/chat", methods=["POST"])
 def chat():

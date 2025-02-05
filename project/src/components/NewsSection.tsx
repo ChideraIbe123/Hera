@@ -1,6 +1,7 @@
 import React from "react";
 import { ChevronRight } from "lucide-react";
 import { ScrollingKeywords } from "./ScrollingKeywords";
+import { ScrollingGeneral } from "./ScrollingGeneral";
 import { useAuth } from "../components/AuthProvider";
 
 interface NewsItem {
@@ -9,6 +10,7 @@ interface NewsItem {
   image: string;
   category?: string;
   views?: string;
+  link?: string;
 }
 
 interface NewsSectionProps {
@@ -42,9 +44,12 @@ export function NewsSection({ title, icon, items, type }: NewsSectionProps) {
         </div>
         <div className="relative">
           <div className="flex space-x-4 sm:space-x-6 overflow-x-auto pb-4 scrollbar-hide">
-            {items.map((item) => (
-              <div
-                key={item.id}
+            {[...items, ...items].map((item, index) => (
+              <a
+                href={item.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                key={`${item.id}-${index}`}
                 className="relative overflow-hidden rounded-xl group flex-shrink-0 w-[280px] sm:w-[320px] shadow-xl transform transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl"
               >
                 <div className="aspect-[4/3] relative">
@@ -72,20 +77,29 @@ export function NewsSection({ title, icon, items, type }: NewsSectionProps) {
                     </div>
                   </div>
                 </div>
-              </div>
+              </a>
             ))}
           </div>
         </div>
       </div>
 
-      {user && (
+      {/* If the type is "tailored", show only the tailored keywords scrolling */}
+      {user && type === "tailored" && (
         <ScrollingKeywords
-          title={
-            type === "tailored"
-              ? "Key Words from the General Population's Conversations"
-              : "Key Words from the General Population's Conversations"
-          }
+          // Adjust the title to reflect that these are your tailored keywords.
+          title="Key Words from Your Conversations"
           userId={user.id}
+          // No endpoint is needed for tailored keywords.
+        />
+      )}
+
+      {/* If the type is "popular", show only the general/popular keywords scrolling */}
+      {user && type === "popular" && (
+        <ScrollingGeneral
+          // This title reflects that these keywords come from general/popular news.
+          title="Popular News Keywords"
+          userId={user.id}
+          endpoint="http://localhost:5000/api/insights"
         />
       )}
     </section>

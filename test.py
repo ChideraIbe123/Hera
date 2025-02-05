@@ -19,14 +19,12 @@ def fetch_documents():
     The table is assumed to have a 'content' column (original text)
     and an 'embedding' column (a stored vector).
     """
-    # Fetch both content and embedding from Supabase
     response = supabase.table('embeddings').select('content, embedding').execute()
     documents = []
     for record in response.data:
         content = record.get('content')
         emb = record.get('embedding')
-        # If the embedding is stored as a string (e.g., "[0.1,0.2,...]"),
-        # convert it to a list of floats.
+        # 
         if isinstance(emb, str):
             try:
                 # Attempt to parse using json.loads (if it is valid JSON)
@@ -39,16 +37,11 @@ def fetch_documents():
     return documents
 
 def generate_query_embedding(query: str):
-    """
-    Generate an embedding for the query using Ollama.
-    Adjust the model name if needed.
-    """
     try:
         response = ollama.embed(
-            model="mxbai-embed-large",  # Adjust the model if you want a different embedding dimension
+            model="mxbai-embed-large",  
             input=query,
         )
-        # The response is a custom type; extract the embedding attribute.
         if hasattr(response, "embedding"):
             emb = response.embedding
         elif hasattr(response, "embeddings"):
@@ -56,7 +49,6 @@ def generate_query_embedding(query: str):
         else:
             print("Unexpected response structure:", response)
             return None
-        # Convert embedding values to float (if not already)
         return [float(x) for x in emb]
     except Exception as e:
         print("Error generating query embedding:", e)
@@ -72,21 +64,17 @@ def retrieve_context(query: str, k: int = 3) -> str:
     if query_emb is None:
         return "No context available."
     
-    # Prepare arrays for similarity calculation.
     query_arr = np.array(query_emb).reshape(1, -1)
     similarities = []
     
-    # Compute cosine similarity for each document.
     for doc in documents:
         doc_emb = np.array(doc["embedding"]).reshape(1, -1)
         sim = cosine_similarity(query_arr, doc_emb)[0][0]
         similarities.append(sim)
     
-    # Sort the documents by similarity (highest first)
     sorted_docs = sorted(zip(documents, similarities), key=lambda x: x[1], reverse=True)
     top_docs = [doc for doc, sim in sorted_docs[:k]]
     
-    # Concatenate the content from the top documents to form context.
     context = "\n\n".join(doc["content"] for doc in top_docs if doc.get("content"))
     return context
 

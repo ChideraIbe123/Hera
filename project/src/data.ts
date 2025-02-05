@@ -1,4 +1,29 @@
 import { Globe, Briefcase, Microscope, Camera, Code, Heart } from 'lucide-react';
+import { createClient } from '@supabase/supabase-js';
+
+export async function getArticles() {
+  const { data, error } = await supabase
+    .from('Articles')
+    .select('id, title, link, snippet, time_scraped, source, created_at, image_url, query_term');
+
+  if (error) throw error;
+
+  // Shuffle the articles using Fisher-Yates algorithm
+  const shuffledData = data ? [...data].sort(() => Math.random() - 0.5) : [];
+
+  return shuffledData.map(article => ({
+    id: article.id,
+    title: article.title, 
+    image: article.image_url,
+    link: article.link,
+    // category: article.category
+  })) || [];
+}
+
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL!,
+  import.meta.env.VITE_SUPABASE_ANON_KEY!
+);
 
 export const tailoredNews = [
   {
