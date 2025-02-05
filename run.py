@@ -8,11 +8,12 @@ app = flask.Flask(__name__)
 scheduler = APScheduler()
 
 def run_scripts():
-    subprocess.run(["python", "./google_querying.py"])
-    subprocess.run(["python", "./general_labeling.py"])
-    subprocess.run(["python", "./emeddings.py"])
-    subprocess.run(["python", "./insights_llm.py"])
-    subprocess.run(["python", "./algo.py"])
+    # Run each script and wait for completion before continuing
+    # subprocess.run(["python", "./insights_llm.py"], check=True)
+    subprocess.run(["python", "./google_querying.py"], check=True)
+    subprocess.run(["python", "./general_labeling.py"], check=True)
+    subprocess.run(["python", "./emeddings.py"], check=True)
+    subprocess.run(["python", "./algo.py"], check=True)
 
 @app.route("/")
 def index():
@@ -23,6 +24,3 @@ if __name__ == "__main__":
     #scheduler.start()
     # app.run(debug=True)
     run_scripts()
-
-
-

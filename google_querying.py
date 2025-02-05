@@ -7,12 +7,16 @@ from dotenv import load_dotenv
 import os
 from supabase import create_client, Client
 
-insights = ["tariffs", "deepseek", "luka doncic", "stock market", "apple"]
+VITE_SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ybXdpaXNmdG15dHhzZXdrd3ZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzgyOTExMTQsImV4cCI6MjA1Mzg2NzExNH0.xPunHD5-T7WqYT4e9lefWqpT1WM_PyKTZQigtk_xqO4"
+VITE_SUPABASE_URL="https://ormwiisftmytxsewkwvp.supabase.co"
 
-def get_insights():
-    return insights 
+supabase = create_client(
+    VITE_SUPABASE_URL,
+    VITE_SUPABASE_ANON_KEY
+)
 
 def get_high_res_image(page_url):
+    print(f"Fetching high-res image for URL: {page_url}")
     try:
         headers = {
             "User-Agent": "Mozilla/5.0",
@@ -20,27 +24,37 @@ def get_high_res_image(page_url):
             "Accept-Encoding": "gzip, deflate"
         }
         response = requests.get(page_url, headers=headers)
+        print("Successfully fetched page content")
         
         head_content = response.text.split('</head>')[0] + '</head>'
         soup = BeautifulSoup(head_content, 'html.parser')
 
         og_image = soup.find("meta", property="og:image")
         if og_image and og_image.get("content"):
+            print("Found og:image")
             return og_image["content"]
 
         soup = BeautifulSoup(response.text, 'html.parser')
+        print("Searching for alternative image sources...")
         
         img_with_srcset = soup.find("img", srcset=True)
         if img_with_srcset:
+            print("Found image with srcset")
             return img_with_srcset["srcset"].split(",")[-1].split(" ")[0]
 
         first_img = soup.find("img", src=True)
+        if first_img:
+            print("Found first available image")
+        else:
+            print("No images found")
         return first_img["src"] if first_img else None
 
-    except Exception:
+    except Exception as e:
+        print(f"Error fetching image: {str(e)}")
         return None
 
-def query_google():
+def query_google(insights):
+    print(f"\n--- Starting Google query for {len(insights)} insights ---")
     conn = http.client.HTTPSConnection("google.serper.dev")
     payload = json.dumps([
         {
@@ -49,15 +63,18 @@ def query_google():
             "tbs": "qdr:d"
         } for insight in insights
     ])
+    print("insights: ", insights)
     headers = {
         'X-API-KEY': '39ef0015c9282897135dcf73ee553d994cfb895d',
         'Content-Type': 'application/json'
     }
 
+    print("Sending request to Google Serper API...")
     conn.request("POST", "/news", payload, headers)
     res = conn.getresponse()
     data = res.read()
     parsed_data = json.loads(data.decode("utf-8"))
+    print("Received response from Google Serper API")
 
     titles = []
     links = []
@@ -67,7 +84,9 @@ def query_google():
     query_terms = []
     image_urls = []
 
+    print(f"Processing {len(parsed_data)} query results...")
     for i, query_result in enumerate(parsed_data):
+        print(f"Processing results for query: {insights[i]}")
         for article in query_result.get('news', []):
             titles.append(article.get('title', ''))
             links.append(article.get('link', ''))
@@ -87,9 +106,22 @@ def query_google():
         'source': sources
     })
 
+    print(f"Created DataFrame with {len(df)} articles")
+    
     load_dotenv()
-    supabase: Client = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
-    supabase.table("Articles").insert(df.to_dict(orient="records")).execute()
+    print("Inserting data into Supabase...")
+    supabase.table("Articles").upsert(df.to_dict(orient="records"), on_conflict="id").execute()
+    print("Data successfully inserted into Supabase")
+
+def all_users_insights():
+    print("\n=== Starting all_users_insights() ===")
+    keywords = supabase.table("user_preferences").select("keywords").execute()
+    for keyword in keywords:
+        print(keywords)
+        # print(f"\nProcessing keywords: {keyword[1]}")
+        input()
+        query_google(keyword[1]['keywords'])
+    print("=== Completed all_users_insights() ===")
 
 if __name__ == "__main__":
-    query_google()
+    all_users_insights()
