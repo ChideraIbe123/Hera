@@ -19,11 +19,11 @@ def get_high_res_image(page_url):
     print(f"Fetching high-res image for URL: {page_url}")
     try:
         headers = {
-            "User-Agent": "Mozilla/5.0",
+            "User-Agent": "Mozilla/5.0", 
             "Accept": "text/html",
             "Accept-Encoding": "gzip, deflate"
         }
-        response = requests.get(page_url, headers=headers)
+        response = requests.get(page_url, headers=headers, timeout=10)
         print("Successfully fetched page content")
         
         head_content = response.text.split('</head>')[0] + '</head>'
@@ -107,20 +107,37 @@ def query_google(insights):
     })
 
     print(f"Created DataFrame with {len(df)} articles")
-    
-    load_dotenv()
     print("Inserting data into Supabase...")
-    supabase.table("Articles").upsert(df.to_dict(orient="records"), on_conflict="id").execute()
-    print("Data successfully inserted into Supabase")
+    df.drop_duplicates(subset=["title"], keep="first", inplace=True)
+    try:
+        supabase.table("Articles").upsert(
+            df.to_dict(orient="records"),
+            on_conflict="title"
+        ).execute()
+        print("Data successfully inserted into Supabase")
+    except Exception as e:
+        print(f"Error inserting data: {str(e)}")
+        raise e
 
 def all_users_insights():
     print("\n=== Starting all_users_insights() ===")
-    keywords = supabase.table("user_preferences").select("keywords").execute()
-    for keyword in keywords:
-        print(keywords)
-        # print(f"\nProcessing keywords: {keyword[1]}")
-        input()
-        query_google(keyword[1]['keywords'])
+    response = supabase.table("user_preferences").select("user_id, keywords").execute()
+    user_preferences = response.data
+    
+    # Create a set to store unique keywords
+    unique_keywords = set()
+    
+    # Collect all unique keywords from all users
+    for user_pref in user_preferences:
+        keywords = user_pref['keywords']
+        if keywords:
+            unique_keywords.update(keywords)
+    
+    # Convert set back to list and query once for all unique keywords
+    if unique_keywords:
+        print(f"\nProcessing {len(unique_keywords)} unique keywords: {list(unique_keywords)}")
+        query_google(list(unique_keywords))
+    
     print("=== Completed all_users_insights() ===")
 
 if __name__ == "__main__":

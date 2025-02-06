@@ -9,7 +9,7 @@ scheduler = APScheduler()
 
 def run_scripts():
     # Run each script and wait for completion before continuing
-    # subprocess.run(["python", "./insights_llm.py"], check=True)
+    subprocess.run(["python", "./insights_llm.py"], check=True)
     subprocess.run(["python", "./google_querying.py"], check=True)
     subprocess.run(["python", "./general_labeling.py"], check=True)
     subprocess.run(["python", "./emeddings.py"], check=True)
