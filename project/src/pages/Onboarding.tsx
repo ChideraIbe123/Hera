@@ -101,9 +101,20 @@ export default function Onboarding() {
         throw updateError;
       }
 
-      console.log("Preferences saved successfully");
+      // Trigger embeddings conversion
+      const response = await fetch("http://localhost:5000/api/new_user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ user_id: user.id }),
+      });
 
-      // Add a small delay to ensure the database update is processed
+      if (!response.ok) {
+        throw new Error("Failed to convert keywords to embeddings");
+      }
+
+      console.log("Preferences saved and embeddings generated successfully");
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       console.log("Attempting to navigate to root...");

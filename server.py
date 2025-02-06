@@ -6,18 +6,17 @@ import json
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from supabase import create_client, Client
-from google_querying import get_insights
 from dotenv import load_dotenv
 import os
 import time
-from flask_caching import Cache
+from insights_llm import convert_keywords_to_embeddings
+import subprocess
 
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
 
-cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 
 VITE_SUPABASE_ANON_KEY=os.getenv("VITE_SUPABASE_ANON_KEY")
 VITE_SUPABASE_URL=os.getenv("VITE_SUPABASE_URL")
@@ -98,32 +97,16 @@ def retrieve_context(query: str, k: int = 3) -> str:
 
 @app.route("/api/insights", methods=["POST"])
 def insights():
-    print("Getting insights")
-    data = request.json
-    current_time = int(time.time())
-    last_run_key = f"last_insights_run_{data.get('user_id')}"
-    
-    last_run = cache.get(last_run_key)
-    if last_run and current_time - last_run < 10800:
-        return jsonify({"message": "Skipped insights check - too soon"})
-        
-    cache.set(last_run_key, current_time)
-
-    try:
-        # Run the main function from google_querying.py
-        from google_querying import query_google
-        query_google()
-        # After running main, get the insights
-        from general_labeling import labeling
-        cluster_dict = labeling()
-        return jsonify(cluster_dict)
-    except Exception as e:
-        print(f"Error running insights: {str(e)}")
-        return jsonify({"error": "Failed to run insights"}), 500
+    output = []
+    response = supabase.table("Articles").select("query_term").execute()
+    for term in response.data:
+        if term.get("query_term"): 
+            output.append(term.get("query_term"))
+    unique_terms = list(set(output))
+    return jsonify(unique_terms)
     
 
 
-    return jsonify(get_insights())
 
 @app.route("/api/chat", methods=["POST"])
 def chat():
@@ -181,6 +164,12 @@ def chat():
             "error": "An internal error occurred",
             "details": str(e)
         }), 500
-
+    
+@app.route("/api/new_user", methods=["POST"])
+def convert_keywords_for_new_user():
+    convert_keywords_to_embeddings()
+    subprocess.run(["python", "./algo.py"], check=True)
+    return jsonify({"message": "Keywords converted to embeddings"})
+    
 if __name__ == "__main__":
     app.run(debug=True)
