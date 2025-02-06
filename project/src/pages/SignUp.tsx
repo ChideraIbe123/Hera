@@ -18,7 +18,8 @@ export default function SignUp() {
     setLoading(true);
 
     try {
-      const { error: signUpError } = await supabase.auth.signUp({
+      // Sign up the user
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -31,8 +32,24 @@ export default function SignUp() {
 
       if (signUpError) throw signUpError;
 
-      navigate("/login", {
-        state: { message: "Account created successfully. Please sign in." },
+      // Create initial user_preferences record
+      if (authData.user) {
+        const { error: preferencesError } = await supabase
+          .from("user_preferences")
+          .insert({
+            user_id: authData.user.id,
+            first_name: firstName,
+            last_name: lastName,
+            onboarded: false,
+            keywords: [],
+          });
+
+        if (preferencesError) throw preferencesError;
+      }
+
+      navigate("/onboarding", {
+        // state: { message: "Account created successfully. Please sign in." },
+        replace: true
       });
     } catch (err) {
       setError(

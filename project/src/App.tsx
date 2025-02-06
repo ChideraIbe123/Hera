@@ -14,9 +14,9 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/onboarding" element={
-            <RequireAuth>
+            // <RequireAuth>
               <Onboarding />
-            </RequireAuth>
+            // </RequireAuth>
           } />
           <Route
             path="/*"

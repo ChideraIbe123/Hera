@@ -49,8 +49,7 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const location = useLocation();
   const [checkingPreferences, setCheckingPreferences] = useState(true);
-  const [shouldRedirectToOnboarding, setShouldRedirectToOnboarding] =
-    useState(false);
+  const [shouldRedirectToOnboarding, setShouldRedirectToOnboarding] = useState(false);
 
   useEffect(() => {
     const checkOnboarding = async () => {
@@ -61,28 +60,20 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
 
       // Don't check preferences if we're already on the onboarding page
       if (location.pathname === "/onboarding") {
-        console.log("On onboarding page, skipping preferences check");
         setCheckingPreferences(false);
         return;
       }
 
       try {
-        console.log("Checking user preferences...");
-        const { data: preferences, error } = await supabase
+        console.log("user.id: ", user.id)
+        console.log("location.pathname: ", location.pathname)
+        const { data: preferences } = await supabase
           .from("user_preferences")
           .select("onboarded")
           .eq("user_id", user.id)
           .single();
 
-        if (error && error.code !== "PGRST116") {
-          console.error("Error checking onboarding status:", error);
-        }
-
-        console.log("Preferences data:", preferences);
-
-        // Only redirect to onboarding if we're not already there and preferences indicate we should
-        if (!preferences?.onboarded && location.pathname !== "/onboarding") {
-          console.log("Setting redirect to onboarding");
+        if (!preferences?.onboarded) {
           setShouldRedirectToOnboarding(true);
         }
       } catch (error) {
@@ -108,6 +99,8 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
   }
 
   if (shouldRedirectToOnboarding && location.pathname !== "/onboarding") {
+    console.log("shouldRedirectToOnboarding: ", shouldRedirectToOnboarding)
+    setShouldRedirectToOnboarding(false);
     return <Navigate to="/onboarding" replace />;
   }
 
