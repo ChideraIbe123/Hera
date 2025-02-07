@@ -7,6 +7,23 @@ const supabase = createClient(
   import.meta.env.VITE_SUPABASE_ANON_KEY!
 );
 
+const placeholderImages = [
+  'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=800', // news general
+  'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=800', // business
+  'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=800', // technology
+  'https://images.unsplash.com/photo-1507413245164-6160d8298b31?auto=format&fit=crop&w=800', // science
+  'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800', // health
+  'https://images.unsplash.com/photo-1495020689067-958852a7765e?auto=format&fit=crop&w=800', // culture
+  'https://images.unsplash.com/photo-1493612276216-ee3925520721?auto=format&fit=crop&w=800', // politics
+  'https://images.unsplash.com/photo-1522211988038-6fcbb8c12c7e?auto=format&fit=crop&w=800', // sports
+  'https://images.unsplash.com/photo-1491841550275-ad7854e35ca6?auto=format&fit=crop&w=800', // entertainment
+  'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=800'  // space
+];
+
+const getRandomPlaceholder = () => {
+  return placeholderImages[Math.floor(Math.random() * placeholderImages.length)];
+};
+
 export async function getArticles() {
   const { data, error } = await supabase
     .from('Articles')
@@ -57,7 +74,7 @@ export async function getArticles() {
   return shuffledData.map(article => ({
     id: article.id,
     title: article.title, 
-    image: article.image_url,
+    image: article.image_url || getRandomPlaceholder(),
     link: article.link,
     time: (article as any).time, // Using the time constant calculated in the forEach loop above
     // category: article.category
@@ -80,7 +97,7 @@ export async function getInsights() {
       id: article.id,
       title: article.title,
       summary: article.snippet,
-      image: article.image_url || 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=800',
+      image: article.image_url || getRandomPlaceholder(),
       link: article.link
     });
     return acc;
@@ -169,7 +186,7 @@ export async function getTailoredNews(user: any) {
   return sortedArticles.map(article => ({
     id: article.id,
     title: article.title,
-    image: article.image_url,
+    image: article.image_url || getRandomPlaceholder(),
     link: article.link,
     time: (article as any).time
   }));

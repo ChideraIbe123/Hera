@@ -57,7 +57,7 @@ export default function Dashboard() {
             title="General News"
             icon={<TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />}
             items={popularArticles}
-            type="tailored"
+            type="popular"
           />
         </section>
         <section id="topics">

@@ -68,7 +68,7 @@ export default function SignUp() {
             <div className="flex items-center justify-center gap-3 mb-4">
               <Settings className="w-8 h-8 text-blue-400" />
               <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-100 to-gray-300 bg-clip-text text-transparent">
-                NewsHub
+                Hera News
               </h1>
             </div>
             <p className="text-gray-400">Create your account</p>
