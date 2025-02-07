@@ -21,9 +21,6 @@ def add_article_to_user():
     for user in result.data:
         if not user['keywords_embeddings']:
             continue
-            
-        # Parse the string representation of embeddings into a list of floats
-        # Remove the outer brackets and split by commas
         embedding_str = user['keywords_embeddings'].strip('[]')
         embedding_values = [float(x) for x in embedding_str.split(',')]
         user_embedding = np.array(embedding_values).reshape(1, -1)
@@ -35,7 +32,6 @@ def add_article_to_user():
             if not article_embedding['embedding']:
                 continue
                 
-            # Same parsing for article embeddings
             article_str = article_embedding['embedding'].strip('[]')
             article_values = [float(x) for x in article_str.split(',')]
             emb = np.array(article_values).reshape(1, -1)
@@ -51,6 +47,39 @@ def add_article_to_user():
         supabase.table("user_preferences").update({
             'ranked_articles': ranked_article_ids
         }).eq('user_id', user['user_id']).execute()
+
+def add_article_to_one_user(user_id):
+    result = supabase.table("user_preferences").select("keywords_embeddings").eq("user_id", user_id).single().execute()
+    if not result.data or not result.data['keywords_embeddings']:
+        return
+        
+    embedding_str = result.data['keywords_embeddings'].strip('[]')
+    embedding_values = [float(x) for x in embedding_str.split(',')]
+    user_embedding = np.array(embedding_values).reshape(1, -1)
+    
+    embeddings_data = get_embeddings()
+    article_similarities = []
+    
+    for article_embedding in embeddings_data:
+        if not article_embedding['embedding']:
+            continue
+            
+        article_str = article_embedding['embedding'].strip('[]')
+        article_values = [float(x) for x in article_str.split(',')]
+        emb = np.array(article_values).reshape(1, -1)
+        
+        similarity = cosine_similarity(user_embedding, emb)[0][0]
+        article_similarities.append({
+            'article_id': article_embedding['article_id'],
+            'similarity': similarity
+        })
+    
+    ranked_articles = sorted(article_similarities, key=lambda x: x['similarity'], reverse=True)
+    ranked_article_ids = [article['article_id'] for article in ranked_articles]
+    supabase.table("user_preferences").update({
+        'ranked_articles': ranked_article_ids
+    }).eq('user_id', user_id).execute()
+
 
 if __name__ == "__main__":
    add_article_to_user()

@@ -107,7 +107,10 @@ export default function Onboarding() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ user_id: user.id }),
+        body: JSON.stringify({
+          user_id: user.id,
+          user_if_d: user.id,
+        }),
       });
 
       if (!response.ok) {

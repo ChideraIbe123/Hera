@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
 
 interface ScrollingKeywordsProps {
   title: string;
@@ -12,12 +13,21 @@ export function ScrollingGeneral({ title }: ScrollingKeywordsProps) {
   useEffect(() => {
     async function fetchKeywords() {
       try {
-        const response = await fetch("http://localhost:5000/api/insights", {
-          method: "POST",
-        });
-        const data = await response.json();
-        if (data) {
-          setKeywords(data);
+        const supabase = createClient(
+          "https://ormwiisftmytxsewkwvp.supabase.co",
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ybXdpaXNmdG15dHhzZXdrd3ZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzgyOTExMTQsImV4cCI6MjA1Mzg2NzExNH0.xPunHD5-T7WqYT4e9lefWqpT1WM_PyKTZQigtk_xqO4"
+        );
+
+        const { data, error } = await supabase
+          .from("Articles")
+          .select("general_keywords")
+          .order("id")
+          .limit(1)
+          .single();
+
+        if (error) throw error;
+        if (data && data.general_keywords) {
+          setKeywords(data.general_keywords);
         }
       } catch (error) {
         console.error("Error fetching keywords:", error);

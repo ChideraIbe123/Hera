@@ -8,9 +8,8 @@ from sklearn.metrics.pairwise import cosine_similarity
 from supabase import create_client, Client
 from dotenv import load_dotenv
 import os
-import time
-from insights_llm import convert_keywords_to_embeddings
-import subprocess
+from insights_llm import convert_keywords_to_embeddings_one_user
+from algo import add_article_to_one_user
 
 load_dotenv()
 
@@ -73,9 +72,6 @@ def generate_query_embedding(query: str):
         return None
 
 def retrieve_context(query: str, k: int = 3) -> str:
-    """
-    Get relevant context from Supabase based on query similarity.
-    """
     documents = fetch_documents()
     query_emb = generate_query_embedding(query)
     if query_emb is None:
@@ -112,17 +108,12 @@ def insights():
 def chat():
     try:
         data = request.json
-        if not data:
-            return jsonify({"error": "No request data provided"}), 400
+    
         
         message = data.get("message")
         conversation_id = data.get("conversation_id")
         previous_messages = data.get("messages", [])
         
-        if not message:
-            return jsonify({"error": "No message provided"}), 400
-        if conversation_id is None:
-            return jsonify({"error": "No conversation_id provided"}), 400
 
         # Get relevant context from Supabase
         context = retrieve_context(message)
@@ -135,7 +126,6 @@ def chat():
         }
         chat_messages.insert(0, system_prompt)
         
-        # Add context and user message
         chat_messages.append({
             'role': 'user',
             'content': f"Using this context:\n\n{context}\n\nAnswer this: {message.strip()}"
@@ -167,8 +157,10 @@ def chat():
     
 @app.route("/api/new_user", methods=["POST"])
 def convert_keywords_for_new_user():
-    convert_keywords_to_embeddings()
-    subprocess.run(["python", "./algo.py"], check=True)
+    data = request.get_json()
+    user_id = data.get('user_id')
+    convert_keywords_to_embeddings_one_user(user_id)
+    add_article_to_one_user(user_id)
     return jsonify({"message": "Keywords converted to embeddings"})
     
 if __name__ == "__main__":

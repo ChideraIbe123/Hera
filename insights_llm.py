@@ -143,6 +143,30 @@ def convert_keywords_to_embeddings():
             else:
                 print(f"Embeddings not found for user {user['user_id']}")
 
+def convert_keywords_to_embeddings_one_user(user_id):
+    result = supabase.table("user_preferences").select("keywords").eq("user_id", user_id).single().execute()
+    if result.data and result.data['keywords']:
+        keywords_text = " ".join(result.data['keywords'])
+        embedding_response = ollama.embed(
+            model='mxbai-embed-large:latest',
+            input=keywords_text
+        )
+        print(embedding_response)
+
+        if hasattr(embedding_response, 'embeddings'):
+            embedding = embedding_response.embeddings
+            def format_vector(embedding):
+                vector_str = ','.join(map(str, embedding))
+                return f"[{vector_str}]"
+            embeddings_vector = format_vector(embedding[0])  
+            supabase.table("user_preferences").update({
+                "keywords_embeddings": embeddings_vector
+            }).eq("user_id", user_id).execute()
+        else:
+            print(f"Embeddings not found for user {user_id}")
+
+
+
 if __name__ == "__main__":
     print("Starting keyword extraction process...")
     extract_keywords_from_db()

@@ -124,21 +124,48 @@ def all_users_insights():
     response = supabase.table("user_preferences").select("user_id, keywords").execute()
     user_preferences = response.data
     
-    # Create a set to store unique keywords
     unique_keywords = set()
     
-    # Collect all unique keywords from all users
     for user_pref in user_preferences:
         keywords = user_pref['keywords']
         if keywords:
             unique_keywords.update(keywords)
     
-    # Convert set back to list and query once for all unique keywords
     if unique_keywords:
         print(f"\nProcessing {len(unique_keywords)} unique keywords: {list(unique_keywords)}")
         query_google(list(unique_keywords))
     
     print("=== Completed all_users_insights() ===")
+
+def make_list():
+    # Get all unique query terms
+    response = supabase.table("Articles").select("query_term").execute()
+    unique_terms = list({
+        term.get("query_term") 
+        for term in response.data 
+        if term.get("query_term")
+    })
+    
+    # Clear general_keywords for all articles using a true condition
+    supabase.table("Articles").update({
+        "general_keywords": []
+    }).filter("id", "gt", 0).execute()
+    
+    # If we have unique terms, update the first article
+    if unique_terms:
+        first_article = (supabase.table("Articles")
+                       .select("id")
+                       .order("id")
+                       .limit(1)
+                       .single()
+                       .execute())
+        
+        if first_article.data:
+            supabase.table("Articles").update({
+                "general_keywords": unique_terms
+            }).eq("id", first_article.data["id"]).execute()
+            
+    return unique_terms
 
 if __name__ == "__main__":
     all_users_insights()
