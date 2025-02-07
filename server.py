@@ -137,7 +137,7 @@ def chat():
         print()
 
         response = ollama.chat(
-            model='hf.co/bartowski/Llama-3.2-3B-Instruct-GGUF:IQ4_XS',
+            model='hf.co/bartowski/Llama-3.2-3B-Instruct-GGUF',
             messages=chat_messages
         )
         

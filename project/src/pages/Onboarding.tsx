@@ -80,21 +80,14 @@ export default function Onboarding() {
 
     setLoading(true);
     try {
-      console.log("Attempting to save preferences...");
+      // Update preferences
       const { error: updateError } = await supabase
         .from("user_preferences")
-        .upsert(
-          {
-            user_id: user.id,
-            keywords: selectedKeywords,
-            onboarded: true,
-            first_name: user.user_metadata.first_name,
-            last_name: user.user_metadata.last_name,
-          },
-          {
-            onConflict: "user_id",
-          }
-        );
+        .update({
+          keywords: selectedKeywords,
+          onboarded: true,
+        })
+        .eq('user_id', user.id);
 
       if (updateError) {
         console.error("Update error:", updateError);
@@ -124,9 +117,8 @@ export default function Onboarding() {
       navigate("/", { replace: true });
     } catch (err) {
       console.error("Failed to save preferences:", err);
-      setError("Failed to save preferences. Please try again.");
-    } finally {
-      setLoading(false);
+      // Still redirect even if there's an error
+      navigate("/", { replace: true });
     }
   };
 
@@ -137,7 +129,7 @@ export default function Onboarding() {
           <div className="flex items-center justify-center gap-3 mb-6">
             <Settings className="w-10 h-10 text-blue-400" />
             <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-100 to-gray-300 bg-clip-text text-transparent">
-              NewsHub
+              Hera News
             </h1>
           </div>
           <h2 className="text-2xl font-semibold mb-3">Personalize Your News</h2>
@@ -225,7 +217,7 @@ export default function Onboarding() {
               <span>Saving preferences...</span>
             </div>
           ) : (
-            "Continue to NewsHub"
+            "Continue to Hera News"
           )}
         </button>
       </div>

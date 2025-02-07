@@ -18,7 +18,8 @@ export default function SignUp() {
     setLoading(true);
 
     try {
-      const { error: signUpError } = await supabase.auth.signUp({
+      // Sign up the user
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -31,8 +32,24 @@ export default function SignUp() {
 
       if (signUpError) throw signUpError;
 
-      navigate("/login", {
-        state: { message: "Account created successfully. Please sign in." },
+      // Create initial user_preferences record
+      if (authData.user) {
+        const { error: preferencesError } = await supabase
+          .from("user_preferences")
+          .insert({
+            user_id: authData.user.id,
+            first_name: firstName,
+            last_name: lastName,
+            onboarded: false,
+            keywords: [],
+          });
+
+        if (preferencesError) throw preferencesError;
+      }
+
+      navigate("/onboarding", {
+        // state: { message: "Account created successfully. Please sign in." },
+        replace: true
       });
     } catch (err) {
       setError(
@@ -51,7 +68,7 @@ export default function SignUp() {
             <div className="flex items-center justify-center gap-3 mb-4">
               <Settings className="w-8 h-8 text-blue-400" />
               <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-100 to-gray-300 bg-clip-text text-transparent">
-                NewsHub
+                Hera News
               </h1>
             </div>
             <p className="text-gray-400">Create your account</p>

@@ -55,7 +55,7 @@ export default function Dashboard() {
         <section id="general">
           <NewsSection
             title="General News"
-            icon={<TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-red-400" />}
+            icon={<TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />}
             items={popularArticles}
             type="popular"
           />
