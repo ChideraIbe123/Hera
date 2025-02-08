@@ -87,7 +87,7 @@ export default function Onboarding() {
           keywords: selectedKeywords,
           onboarded: true,
         })
-        .eq('user_id', user.id);
+        .eq("user_id", user.id);
 
       if (updateError) {
         console.error("Update error:", updateError);
@@ -95,19 +95,20 @@ export default function Onboarding() {
       }
 
       // Trigger embeddings conversion
-      const response = await fetch("http://localhost:5000/api/new_user", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          user_id: user.id,
-          user_if_d: user.id,
-        }),
-      });
+      try {
+        const response = await fetch("http://localhost:5000/api/new_user", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ user_id: user.id }),
+        });
 
-      if (!response.ok) {
-        throw new Error("Failed to convert keywords to embeddings");
+        if (!response.ok) {
+          console.error("Failed to convert keywords to embeddings");
+        }
+      } catch (fetchError) {
+        console.error("Error calling /api/new_user:", fetchError);
       }
 
       console.log("Preferences saved and embeddings generated successfully");

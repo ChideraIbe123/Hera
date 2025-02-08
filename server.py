@@ -90,19 +90,7 @@ def retrieve_context(query: str, k: int = 3) -> str:
     
     context = "\n\n".join(doc["content"] for doc in top_docs if doc.get("content"))
     return context
-
-@app.route("/api/insights", methods=["POST"])
-def insights():
-    output = []
-    response = supabase.table("Articles").select("query_term").execute()
-    for term in response.data:
-        if term.get("query_term"): 
-            output.append(term.get("query_term"))
-    unique_terms = list(set(output))
-    return jsonify(unique_terms)
     
-
-
 
 @app.route("/api/chat", methods=["POST"])
 def chat():
@@ -137,7 +125,7 @@ def chat():
         print()
 
         response = ollama.chat(
-            model='hf.co/bartowski/Llama-3.2-3B-Instruct-GGUF',
+            model='hf.co/bartowski/Llama-3.2-3B-Instruct-GGUF:IQ4_XS',
             messages=chat_messages
         )
         
@@ -162,6 +150,10 @@ def convert_keywords_for_new_user():
     convert_keywords_to_embeddings_one_user(user_id)
     add_article_to_one_user(user_id)
     return jsonify({"message": "Keywords converted to embeddings"})
+
+@app.route('/')
+def text():
+    return 'This is running'
     
 if __name__ == "__main__":
     app.run(debug=True)
