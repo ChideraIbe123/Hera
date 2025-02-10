@@ -91,8 +91,8 @@ export function NewsSection({ title, icon, items, type }: NewsSectionProps) {
       ) : (
         <ScrollingGeneral
           title="Popular News Keywords"
-          userId={user?.id || ""}
-          endpoint="http://localhost:5000/api/insights"
+
+          // endpoint="http://localhost:5000/api/insights"
         />
       )}
     </section>

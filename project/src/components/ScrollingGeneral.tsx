@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
+import { supabase } from "../lib/supabase";
 
 interface ScrollingKeywordsProps {
   title: string;
-  userId: string;
+  userId?: string;
   endpoint?: string;
 }
 
@@ -37,9 +38,9 @@ export function ScrollingGeneral({ title }: ScrollingKeywordsProps) {
     fetchKeywords();
   }, []);
 
-  // Multiply keywords array to ensure continuous scrolling
+  // Reduce the number of duplications to something more reasonable
   const duplicatedKeywords = Array.from(
-    { length: 1000 },
+    { length: 20 }, // Reduced from 1000 to 20
     () => keywords
   ).flat();
 
