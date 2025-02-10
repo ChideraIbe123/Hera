@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { TrendingUp } from "lucide-react";
 import { Header } from "../components/Header";
 import { ChatBox } from "../components/ChatBox";
@@ -7,15 +7,10 @@ import { TopicsSection } from "../components/TopicsSection";
 import { Footer } from "../components/Footer";
 import { getArticles, getTailoredNews, getInsights } from "../data";
 import { useAuth } from "../components/AuthProvider";
+import { LazyNewsSection } from "../components/LazyNewsSection";
 
 export default function Dashboard() {
   const [chatOpen, setChatOpen] = useState(false);
-  const [popularArticles, setPopularArticles] = useState<
-    Array<{ id: any; title: any; image: any; link: any }>
-  >([]);
-  const [tailoredArticles, setTailoredArticles] = useState<
-    Array<{ id: any; title: any; image: any; link: any }>
-  >([]);
   const [topics, setTopics] = useState<
     Array<{
       id: number;
@@ -26,15 +21,7 @@ export default function Dashboard() {
     }>
   >([]);
 
-  useEffect(() => {
-    getArticles().then((articles) => setPopularArticles(articles));
-  }, []);
-
   const { user } = useAuth();
-
-  useEffect(() => {
-    getTailoredNews(user).then((articles) => setTailoredArticles(articles));
-  }, []);
 
   useEffect(() => {
     getInsights().then((insights) => setTopics(insights));
@@ -46,18 +33,18 @@ export default function Dashboard() {
       <ChatBox isOpen={chatOpen} onClose={() => setChatOpen(false)} />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-12">
         <section id="tailored">
-          <NewsSection
+          <LazyNewsSection
             title="Tailored For You"
-            items={tailoredArticles}
             type="tailored"
+            fetchFn={() => getTailoredNews(user)}
           />
         </section>
         <section id="general">
-          <NewsSection
+          <LazyNewsSection
             title="General News"
-            icon={<TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />}
-            items={popularArticles}
             type="popular"
+            fetchFn={getArticles}
+            icon={<TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />}
           />
         </section>
         <section id="topics">

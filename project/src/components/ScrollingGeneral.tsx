@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "../lib/supabase";
 
 interface ScrollingKeywordsProps {
   title: string;
-  userId: string;
+  userId?: string;
   endpoint?: string;
 }
 
@@ -13,17 +13,18 @@ export function ScrollingGeneral({ title }: ScrollingKeywordsProps) {
   useEffect(() => {
     async function fetchKeywords() {
       try {
-        const supabase = createClient(
-          "https://ormwiisftmytxsewkwvp.supabase.co",
-          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ybXdpaXNmdG15dHhzZXdrd3ZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzgyOTExMTQsImV4cCI6MjA1Mzg2NzExNH0.xPunHD5-T7WqYT4e9lefWqpT1WM_PyKTZQigtk_xqO4"
-        );
+        // const supabase = createClient(
+        //   "https://ormwiisftmytxsewkwvp.supabase.co",
+        //   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ybXdpaXNmdG15dHhzZXdrd3ZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzgyOTExMTQsImV4cCI6MjA1Mzg2NzExNH0.xPunHD5-T7WqYT4e9lefWqpT1WM_PyKTZQigtk_xqO4"
+        // );
 
         const { data, error } = await supabase
           .from("Articles")
           .select("general_keywords")
           .order("id")
-          .limit(1)
+          // .limit(1)
           .single();
+        console.log(data);
 
         if (error) throw error;
         if (data && data.general_keywords) {

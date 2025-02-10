@@ -58,7 +58,6 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // Don't check preferences if we're already on the onboarding page
       if (location.pathname === "/onboarding") {
         setCheckingPreferences(false);
         return;

@@ -85,18 +85,18 @@ export function NewsSection({ title, icon, items, type }: NewsSectionProps) {
       </div>
 
       {/* Show scrolling keywords based on type */}
-      {type === "tailored" ? (
-        <ScrollingKeywords
+      {/* {type === "tailored" ? ( */}
+        {/* <ScrollingKeywords
           title="Key Words from Your Conversations"
           userId={user?.id || ""}
-        />
-      ) : (
+        /> */}
+      {/* ) : ( */}
         <ScrollingGeneral
           title="Popular News Keywords"
-          userId={user?.id || ""}
-          endpoint="http://localhost:5000/api/insights"
+          
+          // endpoint="http://localhost:5000/api/insights"
         />
-      )}
+      {/* )} */}
     </section>
   );
 }
