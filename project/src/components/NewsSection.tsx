@@ -64,13 +64,11 @@ export function NewsSection({ title, icon, items, type }: NewsSectionProps) {
                       <span
                         className={`${
                           // type === "tailored"
-                            "bg-gradient-to-r from-blue-600 to-blue-500"
-                            // : "bg-gradient-to-r from-red-600 to-red-500"
+                          "bg-gradient-to-r from-blue-600 to-blue-500"
+                          // : "bg-gradient-to-r from-red-600 to-red-500"
                         } text-xs px-3 py-1.5 rounded-full font-medium shadow-lg inline-block transform transition-all duration-300 group-hover:scale-105`}
                       >
-                        {
-                          item.time
-                          }
+                        {item.time}
                       </span>
                       <h3 className="text-lg sm:text-xl font-bold mt-3 line-clamp-2 leading-tight group-hover:text-blue-300 transition-colors duration-200">
                         {item.title}
